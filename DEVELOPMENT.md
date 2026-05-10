@@ -71,6 +71,62 @@ The project uses Docker for PostgreSQL (with pgvector) and Redis.
 
 Note: If port 5432 is already in use on your system, PostgreSQL will use 5433 instead. Update `DATABASE_URL` accordingly.
 
+## OAuth Setup (PKCE)
+
+The app supports OAuth login via Google, LinkedIn, and GitHub using PKCE (Proof Key for Code Exchange) - no client secrets required.
+
+### Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create new project or select existing
+3. Go to "APIs & Services" → "OAuth consent screen"
+4. Configure:
+   - User Type: External
+   - App name: JobFind
+   - Support email: your-email
+   - Developer contact: your-email
+5. Add Scopes: `openid`, `profile`, `email`
+6. Go to "Credentials" → "Create Credentials" → "OAuth client ID"
+7. Application type: Web application
+8. Add Authorized redirect URI: `http://localhost:3001/api/auth/oauth/google/callback`
+9. Copy Client ID to `GOOGLE_CLIENT_ID` in `.env`
+
+### LinkedIn OAuth
+
+1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/)
+2. Click "Create App"
+3. Fill: App name: JobFind, LinkedIn Page: (create one if needed), Privacy policy URL, Business email
+4. Under "Auth" tab:
+   - Add Redirect URL: `http://localhost:3001/api/auth/oauth/linkedin/callback`
+5. Under "Products" tab: add "Sign In with LinkedIn"
+6. Copy Client ID to `LINKEDIN_CLIENT_ID` in `.env`
+
+### GitHub OAuth
+
+1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
+2. Click "New OAuth App"
+3. Fill:
+   - Application name: JobFind
+   - Homepage URL: http://localhost:3000
+   - Authorization callback URL: `http://localhost:3001/api/auth/oauth/github/callback`
+4. Click "Register application"
+5. Copy Client ID to `GITHUB_CLIENT_ID` in `.env`
+
+### Testing OAuth
+
+```bash
+# Start the server
+npm run dev
+
+# Initiate OAuth flow (returns redirect URL)
+curl http://localhost:3001/api/auth/oauth/google
+
+# Response:
+# { "redirectUrl": "https://accounts.google.com/o/oauth2/v2/auth?...", "state": "..." }
+
+# Visit the redirectUrl in browser to complete OAuth
+```
+
 ## Using Make
 
 Run `make help` to see all available commands:

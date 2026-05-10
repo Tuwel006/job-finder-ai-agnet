@@ -2,7 +2,10 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { AuthController } from './auth_controller.js'
 import { AuthService } from './auth_service.js'
 import { AuthRepository } from './auth_repository.js'
+import { OAuthService } from './oauth_service.js'
 import { UnauthorizedError } from '../../core/base/errors.js'
+import { logger } from '../../core/base/logger.js'
+import { oauthCallbackSchema } from './dto/oauth-callback.dto.js'
 
 async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
@@ -20,6 +23,11 @@ export async function authRouter(fastify: FastifyInstance) {
   )
   const authController = new AuthController(authService)
 
+  // OAuth service with jwt signing function
+  const oauthService = new OAuthService(authRepository, (payload, options) =>
+    fastify.jwt.sign(payload, options)
+  )
+
   // Public routes - NO auth hook
   fastify.post('/register', async (request, reply) => {
     return authController.register(request as any, reply)
@@ -27,6 +35,44 @@ export async function authRouter(fastify: FastifyInstance) {
 
   fastify.post('/login', async (request, reply) => {
     return authController.login(request as any, reply)
+  })
+
+  // OAuth routes
+  fastify.get('/oauth/:provider', async (request, reply) => {
+    const { provider } = request.params as { provider: string }
+    if (!['google', 'linkedin', 'github'].includes(provider)) {
+      return reply.status(400).send({ message: 'Invalid OAuth provider' })
+    }
+
+    try {
+      const { redirectUrl, state } = await oauthService.initiateOAuth(provider)
+      return reply.send({ redirectUrl, state })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'OAuth initiation failed'
+      return reply.status(400).send({ message })
+    }
+  })
+
+  fastify.get('/oauth/:provider/callback', async (request, reply) => {
+    const { provider } = request.params as { provider: string }
+    const { code, state } = request.query as { code?: string; state?: string }
+
+    const parsed = oauthCallbackSchema.safeParse({ code, state })
+    if (!parsed.success) {
+      return reply.status(400).send({
+        message: 'Invalid callback parameters',
+        details: parsed.error.format(),
+      })
+    }
+
+    try {
+      const result = await oauthService.handleCallback(provider, parsed.data.code, parsed.data.state)
+      return reply.send(result)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'OAuth callback failed'
+      logger.error({ error: message, provider }, 'OAuth callback error')
+      return reply.status(400).send({ message })
+    }
   })
 
   // Protected routes - WITH auth hook

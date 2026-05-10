@@ -1,3 +1,5 @@
 export * from './register.dto.js'
 export * from './login.dto.js'
 export * from './auth-response.dto.js'
+export * from './oauth-callback.dto.js'
+export * from './oauth-redirect.dto.js'
