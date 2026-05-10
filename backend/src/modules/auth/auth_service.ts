@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
 import { AuthRepository } from './auth_repository.js'
+import { RefreshTokenService } from './refresh_token_service.js'
 import { registerSchema } from './dto/register.dto.js'
 import { loginSchema } from './dto/login.dto.js'
 import type { RegisterDto } from './dto/register.dto.js'
@@ -11,10 +12,15 @@ import type { AuthResponse, UserResponse } from './dto/auth-response.dto.js'
 const SALT_ROUNDS = 12
 
 export class AuthService {
+  private refreshTokenService?: RefreshTokenService
+
   constructor(
     private authRepository: AuthRepository,
-    private jwtSign: (payload: object, options?: { expiresIn: string }) => string
-  ) {}
+    private jwtSign: (payload: object, options?: { expiresIn: string }) => string,
+    refreshTokenService?: RefreshTokenService
+  ) {
+    this.refreshTokenService = refreshTokenService
+  }
 
   async register(dto: RegisterDto): Promise<AuthResponse> {
     logger.info({ email: dto.email }, 'Register called - STEP 1')

@@ -3,9 +3,11 @@ import { AuthController } from './auth_controller.js'
 import { AuthService } from './auth_service.js'
 import { AuthRepository } from './auth_repository.js'
 import { OAuthService } from './oauth_service.js'
+import { RefreshTokenService } from './refresh_token_service.js'
 import { UnauthorizedError } from '../../core/base/errors.js'
 import { logger } from '../../core/base/logger.js'
 import { oauthCallbackSchema } from './dto/oauth-callback.dto.js'
+import { z } from 'zod'
 
 async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
@@ -15,8 +17,14 @@ async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   }
 }
 
+const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1),
+})
+
 export async function authRouter(fastify: FastifyInstance) {
   const authRepository = new AuthRepository(fastify.prisma)
+  const refreshTokenService = new RefreshTokenService(fastify.prisma)
+
   // Pass jwt.sign directly to service
   const authService = new AuthService(authRepository, (payload, options) =>
     fastify.jwt.sign(payload, options)
@@ -35,6 +43,24 @@ export async function authRouter(fastify: FastifyInstance) {
 
   fastify.post('/login', async (request, reply) => {
     return authController.login(request as any, reply)
+  })
+
+  // Refresh token endpoint (public - uses refresh token itself for auth)
+  fastify.post('/refresh', async (request, reply) => {
+    const parsed = refreshTokenSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ message: 'Refresh token required' })
+    }
+
+    try {
+      const jwtSign = (payload: object, options?: { expiresIn: string }) =>
+        fastify.jwt.sign(payload, options)
+      const tokenPair = await refreshTokenService.refreshTokens(parsed.data.refreshToken, jwtSign)
+      return reply.send(tokenPair)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Token refresh failed'
+      return reply.status(401).send({ message })
+    }
   })
 
   // OAuth routes
@@ -81,7 +107,9 @@ export async function authRouter(fastify: FastifyInstance) {
   })
 
   fastify.post('/logout', { onRequest: [authenticate] }, async (request, reply) => {
-    return authController.logout(request as any, reply)
+    const userId = (request.user as any).id
+    await refreshTokenService.revokeAllUserTokens(userId)
+    return reply.send({ message: 'Logged out successfully' })
   })
 
   fastify.delete('/account', { onRequest: [authenticate] }, async (request, reply) => {

@@ -29,9 +29,28 @@ model User {
   jobSearches          JobSearch[]
   matches              Match[]
   preparationMaterials PreparationMaterial[]
+  refreshTokens        RefreshToken[]
 
   @@unique([provider, providerId])
   @@index([email])
+}
+
+// ============================================
+// REFRESH TOKENS
+// ============================================
+
+model RefreshToken {
+  id           String   @id @default(uuid())
+  tokenHash    String   @unique  // Hashed token for security
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  revokedAt    DateTime?
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
 }
 
 // ============================================
