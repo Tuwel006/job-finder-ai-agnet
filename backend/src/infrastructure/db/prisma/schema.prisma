@@ -1,0 +1,157 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?
+  name         String?
+  avatarUrl    String?
+  provider     String    @default("email")  // 'email', 'google', 'linkedin', 'github'
+  providerId   String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  isActive     Boolean   @default(true)
+  settings     Json      @default("{}")
+
+  resumeProfiles       ResumeProfile[]
+  jobSearches          JobSearch[]
+  matches              Match[]
+  preparationMaterials PreparationMaterial[]
+
+  @@unique([provider, providerId])
+  @@index([email])
+}
+
+// ============================================
+// RESUME PROFILES (User-controlled persistence)
+// ============================================
+
+model ResumeProfile {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parsedJson  Json      // Structured metadata: skills[], experience[], projects[], education[], keywords[]
+  embedding   Unsupported("vector(1536)")?
+  resumeScore Float?
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime? // NULL means active, user controls deletion
+
+  matches Match[]
+
+  @@index([userId])
+  @@index([deletedAt])
+}
+
+// ============================================
+// JOB LISTINGS
+// ============================================
+
+model Job {
+  id          String    @id @default(uuid())
+  externalId  String    // External ID from source
+  source      String    // 'google', 'linkedin', 'indeed', 'wellfound'
+  title       String
+  company     String
+  location    String?
+  salaryRange String?
+  description String?
+  applyUrl    String
+  logoUrl     String?
+  keywords    String[]
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime  @default(now())
+  fetchedAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  isExpired   Boolean   @default(false)
+  isFake      Boolean   @default(false)
+  metadata    Json      @default("{}")
+
+  searches            JobSearch[]
+  matches             Match[]
+  preparationMaterials PreparationMaterial[]
+
+  @@unique([externalId, source])
+  @@index([source])
+  @@index([expiresAt])
+  @@index([isExpired])
+}
+
+// ============================================
+// JOB SEARCHES
+// ============================================
+
+model JobSearch {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  queryText        String
+  generatedQueries String[] // Platform-specific queries
+  filters          Json?    // { location?, remote?, salaryMin?, etc }
+  resultsCount     Int?
+  createdAt        DateTime @default(now())
+
+  jobId String?
+  job   Job?    @relation(fields: [jobId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ============================================
+// MATCHES (User-Job matching)
+// ============================================
+
+model Match {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeProfileId  String
+  resumeProfile    ResumeProfile @relation(fields: [resumeProfileId], references: [id], onDelete: Cascade)
+  jobId            String
+  job              Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  similarityScore  Float
+  matchReasons     String[]
+  isSaved          Boolean  @default(false)
+  isApplied        Boolean  @default(false)
+  appliedAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([resumeProfileId])
+  @@index([similarityScore])
+  @@index([isSaved])
+  @@index([isApplied])
+}
+
+// ============================================
+// PREPARATION MATERIALS
+// ============================================
+
+model PreparationMaterial {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  type      String   // 'questions', 'tips', 'company', 'resume_tailoring'
+  content   Json     // { questions?: string[], tips?: string[], companyInfo?: {}, tailoredResume?: {} }
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId, type])
+  @@index([userId])
+  @@index([jobId])
+  @@index([type])
+}
