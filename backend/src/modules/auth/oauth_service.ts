@@ -92,6 +92,7 @@ export class OAuthService {
       codeVerifier,
       clientId,
       redirectUri,
+      clientSecret: this.getClientSecret(provider),
     })
 
     // Get user info
@@ -141,6 +142,15 @@ export class OAuthService {
       throw new Error(`${provider} OAuth not configured`)
     }
     return clientId
+  }
+
+  private getClientSecret(provider: string): string {
+    const clientSecrets: Record<string, string> = {
+      google: config.oauth.google.clientSecret,
+      linkedin: config.oauth.linkedin.clientSecret,
+      github: config.oauth.github.clientSecret,
+    }
+    return clientSecrets[provider] || ''
   }
 
   private getCallbackUrl(provider: string): string {

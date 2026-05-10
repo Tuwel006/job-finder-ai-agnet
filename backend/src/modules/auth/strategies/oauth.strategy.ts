@@ -25,6 +25,7 @@ export interface IOAuthStrategy {
     codeVerifier: string
     clientId: string
     redirectUri: string
+    clientSecret?: string
   }): Promise<OAuthTokens>
   getUserInfo(params: { accessToken: string }): Promise<OAuthUserInfo>
 }

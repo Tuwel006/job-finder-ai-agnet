@@ -32,19 +32,28 @@ export class GoogleStrategy implements IOAuthStrategy {
     codeVerifier: string
     clientId: string
     redirectUri: string
+    clientSecret?: string
   }): Promise<OAuthTokens> {
+    const bodyParams: Record<string, string> = {
+      client_id: params.clientId,
+      code: params.code,
+      code_verifier: params.codeVerifier,
+      grant_type: 'authorization_code',
+      redirect_uri: params.redirectUri,
+    }
+
+    // Google requires client_secret for token exchange in production
+    // but it should work without it for test users in development
+    if (params.clientSecret) {
+      bodyParams.client_secret = params.clientSecret
+    }
+
     const response = await fetch(GOOGLE_TOKEN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        client_id: params.clientId,
-        code: params.code,
-        code_verifier: params.codeVerifier,
-        grant_type: 'authorization_code',
-        redirect_uri: params.redirectUri,
-      }),
+      body: new URLSearchParams(bodyParams),
     })
 
     if (!response.ok) {
