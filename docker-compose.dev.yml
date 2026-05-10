@@ -1,0 +1,20 @@
+# Development overrides for docker-compose
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  postgres:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: jobfind
+      POSTGRES_PASSWORD: jobfindpass
+      POSTGRES_DB: jobfind
+
+  redis:
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
