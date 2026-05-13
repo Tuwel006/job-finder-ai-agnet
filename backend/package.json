@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/app/server.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/app/server.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "prisma migrate dev --name init",
     "db:studio": "prisma studio",
     "test": "vitest"
+  },
+  "prisma": {
+    "schema": "src/infrastructure/db/prisma/schema.prisma"
   },
   "dependencies": {
     "@fastify/compress": "^6.5.0",

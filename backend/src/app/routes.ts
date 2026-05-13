@@ -1,13 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 import { authRouter } from '../modules/auth/auth_router.js'
+import healthRouter from './health.js'
 
 export async function registerRoutes(fastify: FastifyInstance) {
-  // Health check
-  fastify.get('/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0',
-  }))
+  // Health check routes (no prefix)
+  fastify.register(healthRouter)
 
   // Auth routes
   fastify.register(authRouter, { prefix: '/api/auth' })

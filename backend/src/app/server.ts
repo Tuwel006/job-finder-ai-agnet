@@ -10,9 +10,21 @@ import { authenticate } from './middleware/auth.js'
 import config from '../core/base/config.js'
 import { logger } from '../core/base/logger.js'
 
-async function startServer() {
+export async function createServer() {
   const fastify = Fastify({
-    logger: false,
+    logger: {
+      level: config.nodeEnv === 'development' ? 'debug' : 'info',
+      transport: config.nodeEnv === 'development'
+        ? {
+            target: 'pino-pretty',
+            options: {
+              colorize: true,
+              translateTime: 'SYS:standard',
+              ignore: 'pid,hostname',
+            },
+          }
+        : undefined,
+    },
   })
 
   // Register CORS
@@ -47,14 +59,27 @@ async function startServer() {
   // Register routes
   await registerRoutes(fastify)
 
-  // Start server
+  return fastify
+}
+
+export async function startServer() {
+  const fastify = await createServer()
+
+  // Graceful shutdown
+  const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM']
+  for (const signal of signals) {
+    process.on(signal, async () => {
+      logger.info(`Received ${signal}, shutting down gracefully...`)
+      await fastify.close()
+      process.exit(0)
+    })
+  }
+
   try {
     await fastify.listen({ port: config.port, host: '0.0.0.0' })
-    logger.info(`Server running on port ${config.port}`)
+    logger.info(`Server running on http://0.0.0.0:${config.port}`)
   } catch (err) {
     logger.error(err, 'Failed to start server')
     process.exit(1)
   }
 }
-
-startServer()
