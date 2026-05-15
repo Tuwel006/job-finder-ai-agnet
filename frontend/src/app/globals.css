@@ -11,6 +11,18 @@
     --surface: #FFFFFF;
     --text-primary: #1E293B;
     --text-secondary: #64748B;
+    --error: #DC2626;
+    --success: #10B981;
+    --warning: #F59E0B;
+
+    --radius-sm: 4px;
+    --radius-card: 8px;
+    --radius-modal: 12px;
+    --radius-pill: 24px;
+  }
+
+  * {
+    @apply border-gray-200;
   }
 
   body {
@@ -25,6 +37,10 @@
 
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
 
@@ -42,4 +58,9 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
