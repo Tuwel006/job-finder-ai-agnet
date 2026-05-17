@@ -1,0 +1,1 @@
+export { updateProfileSchema, type UpdateProfileDto } from './update-profile.dto.js'

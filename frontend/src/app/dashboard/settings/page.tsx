@@ -43,11 +43,11 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Full Name</label>
-              <input type="text" defaultValue={user?.name} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all hover:bg-white" />
+              <input type="text" defaultValue={user?.name || ''} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all hover:bg-white" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Email Address</label>
-              <input type="email" defaultValue={user?.email} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all hover:bg-white" />
+              <input type="email" defaultValue={user?.email || ''} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all hover:bg-white" />
             </div>
             <div className="space-y-1.5 lg:col-span-2">
               <label className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">Current Title</label>
