@@ -79,6 +79,13 @@ export const authService = {
   getProfile: async (): Promise<User> => {
     return api.get<User>('/api/auth/me')
   },
+
+  /**
+   * Get OAuth session by session ID
+   */
+  getOAuthSession: async (sessionId: string): Promise<LoginResponse> => {
+    return api.get<LoginResponse>(`/api/auth/oauth/session/${sessionId}`)
+  },
 }
 
 // Token management helpers

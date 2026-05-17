@@ -6,6 +6,7 @@ import { OAuthService } from './oauth_service.js'
 import { RefreshTokenService } from './refresh_token_service.js'
 import { UnauthorizedError } from '../../core/base/errors.js'
 import { logger } from '../../core/base/logger.js'
+import config from '../../core/base/config.js'
 import { oauthCallbackSchema } from './dto/oauth-callback.dto.js'
 import { z } from 'zod'
 
@@ -92,13 +93,36 @@ export async function authRouter(fastify: FastifyInstance) {
     }
 
     try {
-      const result = await oauthService.handleCallback(provider, parsed.data.code, parsed.data.state)
-      return reply.send(result)
+      const { sessionId } = await oauthService.handleCallback(provider, parsed.data.code, parsed.data.state)
+
+      // Redirect to frontend callback page with session ID only
+      const frontendUrl = config.frontend.url
+      const callbackUrl = new URL(`${frontendUrl}/oauth/callback`)
+      callbackUrl.searchParams.set('sessionId', sessionId)
+
+      return reply.redirect(302, callbackUrl.toString())
     } catch (error) {
       const message = error instanceof Error ? error.message : 'OAuth callback failed'
       logger.error({ error: message, provider }, 'OAuth callback error')
-      return reply.status(400).send({ message })
+
+      // Redirect to frontend login page with error
+      const frontendUrl = config.frontend.url
+      const errorUrl = new URL(`${frontendUrl}/login`)
+      errorUrl.searchParams.set('error', message)
+      return reply.redirect(302, errorUrl.toString())
     }
+  })
+
+  fastify.get('/oauth/session/:sessionId', async (request, reply) => {
+    const { sessionId } = request.params as { sessionId: string }
+
+    const authResult = await oauthService.getSession(sessionId)
+    console.log("AUth result: ", authResult);
+    if (!authResult) {
+      return reply.status(404).send({ message: 'Session expired or invalid' })
+    }
+
+    return reply.send(authResult)
   })
 
   // Protected routes - WITH auth hook

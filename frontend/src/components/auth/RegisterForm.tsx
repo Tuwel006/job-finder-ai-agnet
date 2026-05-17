@@ -2,15 +2,13 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { UserPlus } from 'lucide-react'
+import { Mail, Lock, User } from 'lucide-react'
 import { registerSchema, RegisterInput } from '@/lib/validations/auth.schema'
 import { useAuth } from '@/hooks/useAuth'
-import { Button, Input, Flex, Text } from '@/components/ui'
+import { Button, Input, Text } from '@/components/ui'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export function RegisterForm() {
-  const router = useRouter()
   const { register: registerUser, isLoading } = useAuth()
   const {
     register,
@@ -21,24 +19,22 @@ export function RegisterForm() {
   })
 
   const onSubmit = async (data: RegisterInput) => {
-    const success = await registerUser({
+    await registerUser({
       name: data.name,
       email: data.email,
       password: data.password,
     })
-    if (success) {
-      router.push('/dashboard')
-    }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <Input
         label="Full Name"
         type="text"
         placeholder="John Doe"
         error={errors.name?.message}
         required
+        leftIcon={<User className="w-3.5 h-3.5" />}
         {...register('name')}
       />
 
@@ -48,43 +44,41 @@ export function RegisterForm() {
         placeholder="you@example.com"
         error={errors.email?.message}
         required
+        leftIcon={<Mail className="w-3.5 h-3.5" />}
         {...register('email')}
       />
 
       <Input
         label="Password"
         type="password"
-        placeholder="Create a strong password"
+        placeholder="Min 8 chars"
         error={errors.password?.message}
         required
+        leftIcon={<Lock className="w-3.5 h-3.5" />}
         {...register('password')}
       />
 
       <Input
-        label="Confirm Password"
+        label="Confirm"
         type="password"
-        placeholder="Confirm your password"
+        placeholder="Confirm password"
         error={errors.confirmPassword?.message}
         required
+        leftIcon={<Lock className="w-3.5 h-3.5" />}
         {...register('confirmPassword')}
       />
-
-      <Text variant="caption" className="-mt-2 text-text-secondary">
-        Must be 8+ chars with uppercase, lowercase, and a number.
-      </Text>
 
       <Button
         type="submit"
         loading={isLoading}
-        className="w-full"
-        leftIcon={<UserPlus className="w-4 h-4" />}
+        className="w-full h-8 text-xs font-semibold"
       >
         Create Account
       </Button>
 
-      <Text variant="small" className="text-center mt-6">
-        Already have an account?{' '}
-        <Link href="/login" className="text-secondary hover:underline font-medium">
+      <Text variant="caption" className="text-center text-text-secondary text-[11px]">
+        Have account?{' '}
+        <Link href="/login" className="text-secondary hover:text-secondary/80 font-medium">
           Sign in
         </Link>
       </Text>

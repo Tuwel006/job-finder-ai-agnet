@@ -4,19 +4,30 @@ import { Text, Flex } from '@/components/ui'
 
 export default function RegisterPage() {
   return (
-    <div className="w-full">
-      <Text variant="h2" className="text-center mb-2">
-        Create Account
-      </Text>
-      <Text variant="body" className="text-center text-text-secondary mb-8">
-        Start your job search journey
-      </Text>
+    <div className="w-full space-y-3">
+      {/* Header - Compact */}
+      <div className="text-center space-y-0.5">
+        <Text variant="h3" className="text-text-primary">
+          Create Account
+        </Text>
+        <Text variant="caption" className="text-text-secondary">
+          Join JobFind today
+        </Text>
+      </div>
+
+      {/* OAuth Buttons - Small icons in a row */}
       <OAuthButtons />
-      <Flex align="center" className="my-6">
+
+      {/* Divider - Very compact */}
+      <Flex align="center">
         <div className="flex-1 h-px bg-gray-200" />
-        <Text variant="small" className="px-4 text-text-secondary">or</Text>
+        <Text variant="caption" className="px-2 text-text-secondary/40 text-[10px]">
+          or
+        </Text>
         <div className="flex-1 h-px bg-gray-200" />
       </Flex>
+
+      {/* Register Form */}
       <RegisterForm />
     </div>
   )

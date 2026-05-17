@@ -29,7 +29,7 @@ export async function createServer() {
 
   // Register CORS
   await fastify.register(cors, {
-    origin: config.frontend.url,
+    origin: [config.frontend.url, "http://localhost:5000"],
     credentials: true,
   })
 

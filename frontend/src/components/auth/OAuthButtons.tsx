@@ -22,35 +22,35 @@ export function OAuthButtons() {
   }
 
   return (
-    <Flex direction="col" gap={3} className="w-full">
+    <Flex justify="center" gap={2} className="w-full">
       <Button
         variant="outline"
         onClick={() => handleOAuthLogin('google')}
         disabled={isLoading}
-        className="w-full h-12 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-        leftIcon={<FcGoogle className="w-5 h-5" />}
+        className="w-10 h-10 rounded-lg border-gray-200 hover:bg-gray-50 p-0 flex items-center justify-center"
+        title="Sign in with Google"
       >
-        <span className="flex-1 text-left">Continue with Google</span>
+        <FcGoogle className="w-5 h-5" />
       </Button>
 
       <Button
         variant="outline"
         onClick={() => handleOAuthLogin('linkedin')}
         disabled={isLoading}
-        className="w-full h-12 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-        leftIcon={<BsLinkedin className="w-5 h-5 text-[#0A66C2]" />}
+        className="w-10 h-10 rounded-lg border-gray-200 hover:bg-gray-50 p-0 flex items-center justify-center"
+        title="Sign in with LinkedIn"
       >
-        <span className="flex-1 text-left">Continue with LinkedIn</span>
+        <BsLinkedin className="w-5 h-5 text-[#0A66C2]" />
       </Button>
 
       <Button
         variant="outline"
         onClick={() => handleOAuthLogin('github')}
         disabled={isLoading}
-        className="w-full h-12 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-        leftIcon={<TbBrandGithub className="w-5 h-5" />}
+        className="w-10 h-10 rounded-lg border-gray-200 hover:bg-gray-50 p-0 flex items-center justify-center"
+        title="Sign in with GitHub"
       >
-        <span className="flex-1 text-left">Continue with GitHub</span>
+        <TbBrandGithub className="w-5 h-5" />
       </Button>
     </Flex>
   )

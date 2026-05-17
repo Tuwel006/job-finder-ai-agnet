@@ -5,10 +5,13 @@ import { redis } from '../../infrastructure/db/redis/redis_client.js'
 import config from '../../core/base/config.js'
 import { logger } from '../../core/base/logger.js'
 import type { AuthResponse } from './dto/auth-response.dto.js'
+import { randomUUID } from 'crypto'
 
 const OAUTH_STATE_PREFIX = 'oauth:state:'
 const OAUTH_VERIFIER_PREFIX = 'oauth:verifier:'
 const OAUTH_STATE_TTL = 300 // 5 minutes
+const OAUTH_SESSION_PREFIX = 'oauth:session:'
+const OAUTH_SESSION_TTL = 120 // 10 minutes
 
 export class OAuthService {
   private strategies: Map<string, IOAuthStrategy>
@@ -61,7 +64,7 @@ export class OAuthService {
     provider: string,
     code: string,
     state: string
-  ): Promise<AuthResponse> {
+  ): Promise<{ sessionId: string }> {
     // Validate state
     const storedProvider = await redis.get(`${OAUTH_STATE_PREFIX}${state}`)
     if (!storedProvider || storedProvider !== provider) {
@@ -118,7 +121,9 @@ export class OAuthService {
     const accessToken = this.jwtSign({ id: user.id }, { expiresIn: '15m' })
     const refreshToken = this.jwtSign({ id: user.id, type: 'refresh' }, { expiresIn: '7d' })
 
-    return {
+    // Store auth result in Redis with session ID
+    const sessionId = randomUUID()
+    const authResult = {
       user: {
         id: user.id,
         email: user.email,
@@ -129,6 +134,10 @@ export class OAuthService {
       accessToken,
       refreshToken,
     }
+    console.log("redis setting auth data by session id", sessionId);
+    await redis.setex(`${OAUTH_SESSION_PREFIX}${sessionId}`, OAUTH_SESSION_TTL, JSON.stringify(authResult))
+
+    return { sessionId }
   }
 
   private getClientId(provider: string): string {
@@ -155,5 +164,14 @@ export class OAuthService {
 
   private getCallbackUrl(provider: string): string {
     return `${config.oauth.callbackUrl}/${provider}/callback`
+  }
+
+  async getSession(sessionId: string): Promise<AuthResponse | null> {
+    const data = await redis.get(`${OAUTH_SESSION_PREFIX}${sessionId}`)
+    if (!data) {
+      return null
+    }
+    await redis.del(`${OAUTH_SESSION_PREFIX}${sessionId}`)
+    return JSON.parse(data) as AuthResponse
   }
 }
